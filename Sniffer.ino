@@ -14,7 +14,6 @@
 #include "esp_functions.h"
 #include "structures.h"
 #include "deauth.h"
-#include "fake_beacon.h"
 #include "beacons.h"
 #include "clients.h"
 
@@ -88,8 +87,7 @@ void read_command() {
     uint8_t argument_channel = strtol(argument, &argument_ssid, DEC);
     if (argument_ssid != argument) {
       if (*argument_ssid != '\0') argument_ssid++;
-      memset(fake_beacon_ssid[argument_channel - 1], 0, MAX_SSID_LEN);
-      strncpy(fake_beacon_ssid[argument_channel - 1], argument_ssid, MAX_SSID_LEN);
+      beacons.addFake( argument_channel , argument_ssid );
       Serial.printf("Adding fake beacon: %d %s\n" , argument_channel , argument_ssid);
     }
   }
@@ -133,7 +131,8 @@ void loop() {
     nothing_new++;
   }
   
-  fake_beacon(fake_beacon_ssid[channel - 1], 3, channel);
+  beacons.sendFake(3, channel);
+  
   delay(1);
   
   if (Serial.available() > 0) {
