@@ -109,6 +109,8 @@ boolean Beacons::store(beaconinfo bi) {
  * Add a new fake SSID
  */
 void Beacons::addFake(int channel, char *ssid) {
+  Serial.printf("Adding fake beacon: %d %s\n" , channel , ssid);
+  
   memset(fake_beacon_ssid[channel - 1], 0, MAX_SSID_LEN);
   strncpy(fake_beacon_ssid[channel - 1], ssid, MAX_SSID_LEN);
 }
@@ -116,9 +118,9 @@ void Beacons::addFake(int channel, char *ssid) {
 /**
  * Send a fake AP packet
  */
-void Beacons::sendFake(uint8_t packets, byte channel) {
+void Beacons::sendFake(byte channel, uint8_t packets) {
   char * ssid = fake_beacon_ssid[channel - 1];
-  
+
   if (strlen(ssid) > 0 && packets > 0) {
     beacon_packet[10] = beacon_packet[16] = random(256);
     beacon_packet[11] = beacon_packet[17] = random(256);

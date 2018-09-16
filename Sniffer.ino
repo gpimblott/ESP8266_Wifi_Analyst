@@ -12,8 +12,8 @@
 #include <ESP8266WiFi.h>
 
 #include "esp_functions.h"
+#include "commandline.h"
 #include "structures.h"
-#include "deauth.h"
 #include "beacons.h"
 #include "clients.h"
 
@@ -24,16 +24,9 @@ uint8_t nothing_new = 0;
 Beacons beacons;
 Clients clients;
 
-/*
- *  Function that prints all beacons and clients in JSON format
- */
-void print_all() {
-  Serial.print("{\"beacons\":");
-  beacons.print();
-  Serial.print(",\"clients\":");
-  clients.print();
-  Serial.print("}");
-}
+CommandLine commandLine(&beacons , &clients);
+
+
 
 
 /*
@@ -60,51 +53,6 @@ void parse_packet(uint8_t *buf, uint16_t len) {
 
 
 /*
- * Function that reads and executes a command from serial
- */
-void read_command() {
-  char command[64];
-  command[Serial.readBytesUntil('\n', command, 63)] = '\0';
-  char *argument = strchr(command, ' ');
-  if (argument != NULL) {
-    *argument = '\0';
-    argument++;
-  }
-  if (strcmp(command, "deauth_client") == 0) {
-    uint8_t station[ETH_MAC_LEN];
-    for (int i = 0; i < ETH_MAC_LEN; i++) {
-      station[i] = strtol(argument + 3 * i, NULL, HEX);
-    }
-
-    clientinfo *ci = clients.find( station );
-    if( ci ) {
-      deauth_client( *ci );
-    }
-
-  }
-  else if (strcmp(command, "fake_beacon") == 0) {
-    char *argument_ssid;
-    uint8_t argument_channel = strtol(argument, &argument_ssid, DEC);
-    if (argument_ssid != argument) {
-      if (*argument_ssid != '\0') argument_ssid++;
-      beacons.addFake( argument_channel , argument_ssid );
-      Serial.printf("Adding fake beacon: %d %s\n" , argument_channel , argument_ssid);
-    }
-  }
-  else if (strcmp(command, "print_all") == 0) {
-    print_all();
-  }
-  else if (strcmp(command, "print_beacons") == 0) {
-    beacons.print();
-  }
-  else if (strcmp(command, "print_clients") == 0) {
-    clients.print();
-  }
-  Serial.println("\n");
-}
-
-
-/*
  *  Initial setup
  */
 void setup() {
@@ -114,8 +62,10 @@ void setup() {
   wifi_promiscuous_enable(0);
   wifi_set_promiscuous_rx_cb(parse_packet);
   wifi_promiscuous_enable(1);
-}
 
+  Serial.printf("Starting Sniffer\n");
+  Serial.printf("Flash size : %d\n", ESP.getFlashChipSize()/1024);
+}
 
 /*
  * Main loop
@@ -130,12 +80,13 @@ void loop() {
   else {
     nothing_new++;
   }
-  
-  beacons.sendFake(3, channel);
+
+  // Send any fake beacons that have been setup
+  beacons.sendFake(channel , 3);
   
   delay(1);
   
-  if (Serial.available() > 0) {
-    read_command();
-  }
+  // Read and process any
+  commandLine.read();
+
 }

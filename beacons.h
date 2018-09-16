@@ -14,7 +14,7 @@ class Beacons {
     struct beaconinfo parse(uint8_t *frame, uint16_t framelen, signed rssi);
     boolean store(beaconinfo bi);
     
-    void sendFake(uint8_t packets, byte channel); 
+    void sendFake(byte channel, uint8_t packets); 
     void addFake(int channel, char *ssid);
     
     void print(beaconinfo bi);

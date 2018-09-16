@@ -10,6 +10,7 @@ class Clients {
     
     boolean store(clientinfo ci);
 
+    void deauth(clientinfo ci);
     clientinfo *find(uint8_t *station);
     
     void print(clientinfo ci);
